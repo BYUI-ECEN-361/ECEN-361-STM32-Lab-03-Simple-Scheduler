@@ -55,3 +55,8 @@ Debug/Core/Src/main.cyclo
 *.cyclo
 *.o
 *.su
+*.elf
+*.list
+*.map
+*.cyclo
+*.o
