@@ -60,8 +60,8 @@ all: main-build
 main-build: ECEN-361-STM32-Lab-03-Simple-Scheduler.elf secondary-outputs
 
 # Tool invocations
-ECEN-361-STM32-Lab-03-Simple-Scheduler.elf ECEN-361-STM32-Lab-03-Simple-Scheduler.map: $(OBJS) $(USER_OBJS) C:\Users\lynn\STM32CubeIDE\ECEN-361-workspace\ECEN-361-STM32-Lab-03-Simple-Scheduler\STM32L476RGTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "ECEN-361-STM32-Lab-03-Simple-Scheduler.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\lynn\STM32CubeIDE\ECEN-361-workspace\ECEN-361-STM32-Lab-03-Simple-Scheduler\STM32L476RGTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="ECEN-361-STM32-Lab-03-Simple-Scheduler.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+ECEN-361-STM32-Lab-03-Simple-Scheduler.elf ECEN-361-STM32-Lab-03-Simple-Scheduler.map: $(OBJS) $(USER_OBJS) C:\Users\lynn\Repositories\ECEN-361\ECEN-361-STM32-Lab-03-Simple-Scheduler\STM32L476RGTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "ECEN-361-STM32-Lab-03-Simple-Scheduler.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\lynn\Repositories\ECEN-361\ECEN-361-STM32-Lab-03-Simple-Scheduler\STM32L476RGTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="ECEN-361-STM32-Lab-03-Simple-Scheduler.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

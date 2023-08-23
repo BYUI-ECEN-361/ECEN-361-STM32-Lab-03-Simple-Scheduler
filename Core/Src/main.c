@@ -14,6 +14,12 @@
   * If no LICENSE file comes with this software, it is provided AS-IS.
   *
   ******************************************************************************
+  * @copyright	BYU-Idaho
+  * @date		2023
+  * @version	F23
+  * @note		For course ECEN-361
+  * @author		Lynn Watson
+  ******************************************************************************
   */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
@@ -21,6 +27,9 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "MultiFunctionShield.h"
+#include "ecen-361-lab03-support.h"
+#include <stdio.h>
 
 /* USER CODE END Includes */
 
@@ -32,23 +41,6 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 
-
-/*   Some shortcuts */
-// Standalone RED
-    /* Turn on user LED */
-///     Can also do this:      GPIO_write(CONFIG_GPIO_LED_0, CONFIG_GPIO_LED_ON);
-
-//Fix these
-// RGB RED
-#define RGB_RED_TOGGLE  HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin)
-// RGB GREEN
-#define RGB_GREEN_TOGGLE  HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin)
-// RGB BLUE
-#define RGB_BLUE_TOGGLE  HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin)
-
-
-
-
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -57,6 +49,9 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+TIM_HandleTypeDef htim1;
+TIM_HandleTypeDef htim17;
+
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
@@ -67,93 +62,57 @@ UART_HandleTypeDef huart2;
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
+static void MX_TIM17_Init(void);
+static void MX_TIM1_Init(void);
 /* USER CODE BEGIN PFP */
+/* Private function prototypes -----------------------------------------------*/
+#define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
+void MultiFunctionShield_WriteNumberToSegment(uint8_t digit);
+void MultiFunctionShield_Display (int16_t value);
+void MultiFunctionShield__ISRFunc(void);
+void MultiFunctionShield_Clear(void);
 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-typedef void (*task_cb)();
-#define MAXTASKS 8
-int pin1_status = 0;
-int pin2_status= 0;
-int idle_pin_status = 0;
-int last_runtime;
-int num_tasks = 0;
-char        input;
-const char  echoPrompt[] = "Echoing characters:\r\n";
-
-
-
-typedef struct
-{
-    int period;
-    int remaining_time;
-    int is_running;
-    task_cb callback;
-} taskControlBlock;
-
-taskControlBlock tasks[MAXTASKS];
-
-/******************* Student editable below here ******************/
-
-
-
-void Scheduler_Init()
-{
-    last_runtime = uwTick;
-}
-
-void Scheduler_StartTask(int period, task_cb task)
-{
-    if (num_tasks < MAXTASKS)
-    {
-        tasks[num_tasks].period = period;
-        tasks[num_tasks].remaining_time = 0;
-        tasks[num_tasks].is_running = 1;
-        tasks[num_tasks].callback = task;
-        num_tasks++;
-    }
-}
-
-void Scheduler_Dispatch()
-{
-
-//  Your code goes here
-
-  return;
-}
-
-
-// task function for PulsePin task
-void blue_task()
-    {
-    //Serial.println("Pin1 task");
-    RGB_BLUE_TOGGLE;
-    }
-
-// task function for PulsePin task
-void green_task()
-    {
-    // Serial.println("Pin2 task");
-    RGB_GREEN_TOGGLE;
-    }
-
-void idle_process()
-    {
-    // this function can perform some low-priority task while the scheduler has nothing to do
-    // It should return before the idle period (measured in ms) has expired.  For example, it
-    // could sleep or respond to I/O.
-    // example idle function that just pulses a pin.
-    //     Serial.println("idle process");
-    RGB_RED_TOGGLE;
-    }
-
-
-
-
-
+/******************************** STUDENT EDITABLE HERE STARTS HERE ***********************/
+  void Scheduler_Dispatch()
+      {
+      /* uWTick is updated each SysTick*/
+      uint32_t runTime = uwTick - last_runtime;     /* Save how long this slice has been going */
+      last_runtime = uwTick;
+      task_cb task = NULL;
+      /*
+       * YOUR CODE GOES HERE
+       * Note that you should also look at the 'suspended' piece of information
+       * in the task_control block to see if the scheduler needs to skip the task for now
+       */
+      int i;
+         for(i = 0; i < num_tasks; i++)
+         {
+           if (tasks[i].suspended == false)
+           {
+             tasks[i].remaining_time -= runTime;
+             if (tasks[i].remaining_time < 0)
+             {
+               if (task == NULL)
+               {
+                 tasks[i].remaining_time = tasks[i].period;
+                 task = tasks[i].callback;
+               }
+             }
+           }
+         }
+         if (task == NULL)
+         {
+           task = idle_process;
+         }
+         task();
+         return;
+         }
+  /******************************** STUDENT EDITABLE ENDS STARTS HERE ***********************/
 
 
 
@@ -176,6 +135,8 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
+  // HAL_GPIO_WritePin(Buzzer_GPIO_Port, Buzzer_Pin, 0);
+
 
   /* USER CODE END Init */
 
@@ -189,36 +150,46 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_TIM17_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+  HAL_TIM_Base_Start_IT(&htim17);  // LED SevenSeg cycle thru them
+  // Clear the Seven-Segments
+  MultiFunctionShield_Clear();
 
+
+  // Clear the lights
+  HAL_GPIO_WritePin(LED_D1_GPIO_Port, LED_D1_Pin,GPIO_PIN_SET);
+  HAL_GPIO_WritePin(LED_D2_GPIO_Port, LED_D2_Pin,GPIO_PIN_SET);
+  HAL_GPIO_WritePin(LED_D3_GPIO_Port, LED_D3_Pin,GPIO_PIN_SET);
+  HAL_GPIO_WritePin(LED_D4_GPIO_Port, LED_D4_Pin,GPIO_PIN_SET);
+
+	//MultiFunctionShield_Display(10000);  // Out of range  will display "----"
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  printf("\033\143\n");  // clear the terminal before printing
+  printf("Starting Lab-03:  Write a scheduler\n\r\n\r");  // clear the terminal before printing
+  HAL_Delay(1000);
 
-  Scheduler_Init();
-  // Start task arguments are:
-  //      start offset in ms, period in ms, function callback
-  Scheduler_StartTask(1000, blue_task);
-  Scheduler_StartTask(1500, green_task);
-  //
-  // RGB_GREEN_ON;
-  // while(1){ UART_write(huart2, echoPrompt, sizeof(echoPrompt)); }
-	// HAL_UART_Transmit(&huart2, (uint8_t*)buf, strlen(buf), 1000);
+	Scheduler_Init();
+	// Start task arguments are:
+	//      start offset in ms, period in ms, function callback
+	Scheduler_StartTask(1000, D1_task,"D1_task");
+	Scheduler_StartTask(1500, D4_task,"D4_task");
+	//
 
-  /* Loop forever echoing */
-  /*
-  while (1) {
-      UART_read(uart, &input, 1);
-      UART_write(uart, &input, 1);
-      */
 
- Scheduler_Dispatch();
 
-	  // uwTick
+
+  while (1)
+  {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	Scheduler_Dispatch();
+  }
   /* USER CODE END 3 */
 }
 
@@ -269,6 +240,85 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+}
+
+/**
+  * @brief TIM1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM1_Init(void)
+{
+
+  /* USER CODE BEGIN TIM1_Init 0 */
+
+  /* USER CODE END TIM1_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM1_Init 1 */
+
+  /* USER CODE END TIM1_Init 1 */
+  htim1.Instance = TIM1;
+  htim1.Init.Prescaler = 8000-1;
+  htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim1.Init.Period = 10000;
+  htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim1.Init.RepetitionCounter = 0;
+  htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim1, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterOutputTrigger2 = TIM_TRGO2_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim1, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM1_Init 2 */
+
+  /* USER CODE END TIM1_Init 2 */
+
+}
+
+/**
+  * @brief TIM17 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM17_Init(void)
+{
+
+  /* USER CODE BEGIN TIM17_Init 0 */
+
+  /* USER CODE END TIM17_Init 0 */
+
+  /* USER CODE BEGIN TIM17_Init 1 */
+
+  /* USER CODE END TIM17_Init 1 */
+  htim17.Instance = TIM17;
+  htim17.Init.Prescaler = 800-1;
+  htim17.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim17.Init.Period = 100;
+  htim17.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim17.Init.RepetitionCounter = 0;
+  htim17.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim17) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM17_Init 2 */
+
+  /* USER CODE END TIM17_Init 2 */
+
 }
 
 /**
@@ -324,7 +374,11 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, LED_D1_Pin|LED_D2_Pin|LED_D3_Pin|SevenSeg_CLK_Pin
+                          |SevenSeg_DATA_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOB, SevenSeg_LATCH_Pin|LED_D4_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : B1_Pin */
   GPIO_InitStruct.Pin = B1_Pin;
@@ -332,18 +386,113 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : LD2_Pin */
-  GPIO_InitStruct.Pin = LD2_Pin;
+  /*Configure GPIO pin : LM35_IN_Pin */
+  GPIO_InitStruct.Pin = LM35_IN_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG_ADC_CONTROL;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(LM35_IN_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : PA0 */
+  GPIO_InitStruct.Pin = GPIO_PIN_0;
+  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG_ADC_CONTROL;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : Button_1_Pin Button_2_Pin */
+  GPIO_InitStruct.Pin = Button_1_Pin|Button_2_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : LED_D1_Pin LED_D2_Pin LED_D3_Pin SevenSeg_CLK_Pin
+                           SevenSeg_DATA_Pin */
+  GPIO_InitStruct.Pin = LED_D1_Pin|LED_D2_Pin|LED_D3_Pin|SevenSeg_CLK_Pin
+                          |SevenSeg_DATA_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(LD2_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : Button_3_Pin */
+  GPIO_InitStruct.Pin = Button_3_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(Button_3_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : SevenSeg_LATCH_Pin LED_D4_Pin */
+  GPIO_InitStruct.Pin = SevenSeg_LATCH_Pin|LED_D4_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI0_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI0_IRQn);
+
+  HAL_NVIC_SetPriority(EXTI1_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI1_IRQn);
+
+  HAL_NVIC_SetPriority(EXTI4_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI4_IRQn);
 
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */
 }
 
 /* USER CODE BEGIN 4 */
+
+
+/**
+  * @brief  Retargets the C library printf function to the USART.
+  * @param  None
+  * @retval None
+  */
+PUTCHAR_PROTOTYPE
+{
+  /* Place your implementation of fputc here */
+  /* e.g. write a character to the USART1 and Loop until the end of transmission */
+  HAL_UART_Transmit(&huart2, (uint8_t *)&ch, 1, 0xFFFF);
+
+  return ch;
+}
+
+
+
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+	{
+	// All three buttons generate GPIO  interrupts
+	switch(GPIO_Pin)
+	{
+	case Button_1_Pin:
+		// Toggle the suspend on task D1
+		Scheduler_Toggle_Suspend("D1_task");
+		break;
+	case Button_2_Pin:
+		// Toggle the suspend on task D4
+		Scheduler_Toggle_Suspend("D4_task");
+		// HAL_GPIO_TogglePin(LED_D1_GPIO_Port, LED_D1_Pin);
+		break;
+	case Button_3_Pin:
+		break;
+	default:
+      __NOP();
+	}
+}
+
+// Callback: timer has rolled over
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+	{
+	// Check which version of the timer triggered this callback and toggle LED
+
+  if (htim == &htim17 )
+	  {
+		  MultiFunctionShield__ISRFunc();
+	  }
+
+	}
+
+
 
 /* USER CODE END 4 */
 
