@@ -20,6 +20,12 @@
   * @note		For course ECEN-361
   * @author		Lynn Watson
   ******************************************************************************
+  *
+  * Student should only modify code between
+  ************** STUDENT EDITABLE HERE STARTS HERE *****
+  ************** STUDENT EDITABLE HERE ENDS HERE *******
+  *
+  ******************************************************************************
   */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
@@ -89,30 +95,11 @@ void MultiFunctionShield_Clear(void);
        * Note that you should also look at the 'suspended' piece of information
        * in the task_control block to see if the scheduler needs to skip the task for now
        */
-      int i;
-         for(i = 0; i < num_tasks; i++)
-         {
-           if (tasks[i].suspended == false)
-           {
-             tasks[i].remaining_time -= runTime;
-             if (tasks[i].remaining_time < 0)
-             {
-               if (task == NULL)
-               {
-                 tasks[i].remaining_time = tasks[i].period;
-                 task = tasks[i].callback;
-               }
-             }
-           }
-         }
-         if (task == NULL)
-         {
-           task = idle_process;
-         }
-         task();
+  /******************************** STUDENT EDITABLE ENDS STARTS HERE ***********************/
+
+         task();	// The task is called!
          return;
          }
-  /******************************** STUDENT EDITABLE ENDS STARTS HERE ***********************/
 
 
 
