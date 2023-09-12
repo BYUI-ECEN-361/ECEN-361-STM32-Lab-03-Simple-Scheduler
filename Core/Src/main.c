@@ -449,6 +449,7 @@ PUTCHAR_PROTOTYPE
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 	{
 	// All three buttons generate GPIO  interrupts
+  /************** STUDENT EDITABLE HERE STARTS HERE *****/
 	switch(GPIO_Pin)
 	{
 	case Button_1_Pin:
@@ -456,15 +457,13 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 		Scheduler_Toggle_Suspend("D1_task");
 		break;
 	case Button_2_Pin:
-		// Toggle the suspend on task D4
-		Scheduler_Toggle_Suspend("D4_task");
-		// HAL_GPIO_TogglePin(LED_D1_GPIO_Port, LED_D1_Pin);
 		break;
 	case Button_3_Pin:
 		break;
 	default:
       __NOP();
 	}
+  /************** STUDENT EDITABLE HERE ENDS HERE *****/
 }
 
 // Callback: timer has rolled over
