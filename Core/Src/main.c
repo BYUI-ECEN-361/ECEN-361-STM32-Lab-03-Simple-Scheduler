@@ -95,7 +95,7 @@ void MultiFunctionShield_Clear(void);
        * Note that you should also look at the 'suspended' piece of information
        * in the task_control block to see if the scheduler needs to skip the task for now
        */
-  /******************************** STUDENT EDITABLE ENDS STARTS HERE ***********************/
+  /******************************** STUDENT EDITABLE ENDS HERE ***********************/
 
          task();	// The task is called!
          return;
@@ -163,8 +163,8 @@ int main(void)
 	Scheduler_Init();
 	// Start task arguments are:
 	//      start offset in ms, period in ms, function callback
-	Scheduler_StartTask(1000, D1_task,"D1_task");
-	Scheduler_StartTask(1500, D4_task,"D4_task");
+	Scheduler_StartTask(700, D1_task);
+	Scheduler_StartTask(1500, D4_task);
 	//
 
 
@@ -454,7 +454,6 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 	{
 	case Button_1_Pin:
 		// Toggle the suspend on task D1
-		Scheduler_Toggle_Suspend("D1_task");
 		break;
 	case Button_2_Pin:
 		break;

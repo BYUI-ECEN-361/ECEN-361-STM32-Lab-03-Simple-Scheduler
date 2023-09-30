@@ -3,12 +3,10 @@
  * ECEN-361 Lab-3  Write a simple scheduler
  **********************************************/
 #include <stdbool.h>
-#include <stdio.h>
-#include "MultiFunctionShield.h"
 #define MAXTASKS 4
 // DIAGNOSTIC is a simple flag that kicks in extra statements
 // if we need to see more info during run time
-#define DIAGNOSTIC  true
+#define DIAGNOSTIC  false
 
 typedef void (*task_cb)();
 int last_runtime;
@@ -22,64 +20,40 @@ typedef struct
     {
     int period;
     int remaining_time;
-    int suspended;
-    char* task_name;		// A unique string to identify this task control block single item
+    bool suspended;
     task_cb callback;
     } taskControlBlock;
 
 
 	/** Here is the queue -- well, list of task control blocks **/
 
-taskControlBlock tasks[MAXTASKS];
+taskControlBlock list_of_tasks_to_do[MAXTASKS];
 
 
 /**  declarations */
 void Scheduler_Init()
 	{ last_runtime = uwTick; }
 
+void Scheduler_Toggle_Suspend(int TCB_number)
+	{
+	/* incoming is the task_control_block number */
+	list_of_tasks_to_do[TCB_number].suspended = !list_of_tasks_to_do[TCB_number].suspended;
+	}
 
 /* Function to add tasks to the queue */
-/**
-  * @brief Scheduler_StartTask
-  * @param period   Integer defining how many SysTicks between starts
-  * @param task     pointer to the routine (callback) to run
-  * @param taskname The control buffer structure
-  * @retval None
-  */
 
-void Scheduler_StartTask(int period, task_cb task, char* taskname)
+void Scheduler_StartTask(int period, task_cb task)
 {
     if (num_tasks < MAXTASKS)
     {
-        tasks[num_tasks].period = period;
-        tasks[num_tasks].remaining_time = 0;
-        tasks[num_tasks].suspended = false;
-        tasks[num_tasks].callback = task;
-        tasks[num_tasks].task_name = taskname;
+        list_of_tasks_to_do[num_tasks].period = period;
+        list_of_tasks_to_do[num_tasks].remaining_time = 0;
+        list_of_tasks_to_do[num_tasks].suspended = false;
+        list_of_tasks_to_do[num_tasks].callback = task;
         num_tasks++;
     }
 }
 
-int find_task_number(char* theTaskName)
-	{
-	int taskcnt = 0;
-	/* find the task */
-	for (taskcnt=0;taskcnt < num_tasks;taskcnt++)
-		{
-		if (tasks[taskcnt].task_name == theTaskName)
-		return taskcnt;
-		}
-	return 0;
-	}
-
-void Scheduler_Toggle_Suspend(char* theTaskName)
-	{
-	int theTaskNumber =find_task_number(theTaskName);
-	if (tasks[theTaskNumber].suspended)
-		{tasks[theTaskNumber].suspended = false;}
-	else
-		{tasks[theTaskNumber].suspended = true;}
-	}
 
 /* Function that will be run when no other functions are running. */
 void idle_process();
@@ -92,13 +66,14 @@ void idle_process();
 
 void D1_task()
     { TASK_D1_LED_TOGGLE
-	  MultiFunctionShield_Single_Digit_Display (1, Task_D1_Count++);
+		MultiFunctionShield_Single_Digit_Display(4,Task_D1_Count++);
+
 
     }
 
 void D4_task()
     { TASK_D4_LED_TOGGLE
-	  MultiFunctionShield_Single_Digit_Display (4, Task_D4_Count++);
+		MultiFunctionShield_Single_Digit_Display(1,Task_D4_Count++);
 	  }
 
 void uartout_task()
@@ -117,8 +92,19 @@ void idle_process()
      *
      *  It should return before the idle period (measured in ms) has expired.
      */
+    int i;
     if (DIAGNOSTIC) {
-        printf("Entered IDLE on tick: %ld\n\r",uwTick);
+        /* RGB_RED_TOGGLE;
+        UART_write(uart, "Entered IDLE  ", 13 );
+        print_out_the_systick_count();
+        */
+        }
+    for (i=0;i<=10;i++){}
+    if (DIAGNOSTIC) {
+    	/*
+        UART_write(uart, "Left IDLE  ", 10 );
+        print_out_the_systick_count();
+        */
         }
      HAL_Delay(100);
     }

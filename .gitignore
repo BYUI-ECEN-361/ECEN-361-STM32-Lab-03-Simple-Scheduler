@@ -60,3 +60,5 @@ Debug/Core/Src/main.cyclo
 *.map
 *.cyclo
 *.o
+.settings/language.settings.xml
+.settings/stm32cubeide.project.prefs
