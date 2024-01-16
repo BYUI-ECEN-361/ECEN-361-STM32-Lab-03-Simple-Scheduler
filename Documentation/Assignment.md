@@ -1,5 +1,8 @@
 # Lab-03: Writing a Simple Scheduler
 
+
+     Student Name:  Fill-in HERE
+
 ## Introduction
 
 In this lab you will create a scheduler on your Nucleo-476RG that will execute three tasks at predetermined rates. To do this you will create a scheduler. A scheduler is a set of code that keeps a queue of possible processes/threads/tasks (we’ll say “**task**” here) and decides which of these should be executed at what time on the processor.
