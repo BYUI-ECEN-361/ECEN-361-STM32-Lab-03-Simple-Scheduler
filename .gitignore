@@ -62,7 +62,6 @@ Debug/makefile
 Debug/Core/Src/main.cyclo
 *.o
 *.su
-*.elf
 *.list
 *.map
 
