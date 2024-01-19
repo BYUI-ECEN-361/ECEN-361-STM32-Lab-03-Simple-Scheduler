@@ -5,7 +5,6 @@
 *.o
 *.ko
 *.obj
-*.elf
 *.cyclo
 
 # Linker output
@@ -53,7 +52,6 @@ Mkfile.old
 dkms.conf
 .settings/language.settings.xml
 *.o
-*.elf
 *.list
 *.o
 *.o
