@@ -3,6 +3,7 @@
  * ECEN-361 Lab-3  Write a simple scheduler
  **********************************************/
 #include <stdbool.h>
+#include <stdio.h>
 #define MAXTASKS 4
 // DIAGNOSTIC is a simple flag that kicks in extra statements
 // if we need to see more info during run time
@@ -15,6 +16,13 @@ uint32_t switch_status = 0;
 
 int16_t Task_D1_Count = 0;
 int16_t Task_D4_Count = 0;
+
+char uart_buf[50];
+int uart_buf_len;
+uint16_t timer_val;
+bool first_idle = true;
+
+UART_HandleTypeDef huart2;
 
 typedef struct
     {
@@ -67,13 +75,14 @@ void idle_process();
 void D1_task()
     { TASK_D1_LED_TOGGLE
 		MultiFunctionShield_Single_Digit_Display(4,Task_D1_Count++);
-
+    	first_idle = true;
 
     }
 
 void D4_task()
     { TASK_D4_LED_TOGGLE
 		MultiFunctionShield_Single_Digit_Display(1,Task_D4_Count++);
+    	first_idle = true;
 	  }
 
 void uartout_task()
@@ -88,25 +97,21 @@ void idle_process()
     {
     /*
      * This function can perform some low-priority task while the scheduler has nothing to do
-     *  Example here:  Toggle the RGB_REG_TOGGLE
+     *  Example here:  Uart transmitting the systick value
      *
      *  It should return before the idle period (measured in ms) has expired.
      */
-    int i;
-    if (DIAGNOSTIC) {
-        /* RGB_RED_TOGGLE;
-        UART_write(uart, "Entered IDLE  ", 13 );
-        print_out_the_systick_count();
-        */
-        }
-    for (i=0;i<=10;i++){}
-    if (DIAGNOSTIC) {
-    	/*
-        UART_write(uart, "Left IDLE  ", 10 );
-        print_out_the_systick_count();
-        */
-        }
-     HAL_Delay(100);
+	if(first_idle)
+	{
+	//get systick timer value
+	timer_val = HAL_GetTick();
+	//show systick value
+	uart_buf_len = sprintf(uart_buf, "Entered IDLE at %u\r\n", timer_val);
+	HAL_UART_Transmit(&huart2, (uint8_t*)uart_buf, uart_buf_len, 100);
+	//make sure it only happens on first idle after a task
+	first_idle = false;
+	}
+
     }
 
 

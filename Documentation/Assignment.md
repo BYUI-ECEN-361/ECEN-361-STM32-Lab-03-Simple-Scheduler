@@ -1,8 +1,5 @@
 # Lab-03: Writing a Simple Scheduler
 
-
-     Student Name:  Fill-in HERE
-
 ## Introduction
 
 In this lab you will create a scheduler on your Nucleo-476RG that will execute three tasks at predetermined rates. To do this you will create a scheduler. A scheduler is a set of code that keeps a queue of possible processes/threads/tasks (we’ll say “**task**” here) and decides which of these should be executed at what time on the processor.
@@ -48,13 +45,13 @@ You’ll be able to verify operation with 3 different output:
 
 - LED_D1 and LED_D4 lights blinking at their appropriate rates.
 
-- The far left and far right 7-Segment displays will count from 0-9, just showing the countup
+- The far left and far right 7-Segment displays will count from 0-9 and 0-5 just showing the countups
 
 - ![](media/1e029bae7d379ac326c31c738d64ee19.png)The terminal emulator output will show
   
   Output streaming **uwTICK** value each IDLE
 
-If you have difficulty seeing the serial communication coming thru a terminal emulator, contact a T/A or Instructor.
+If you have difficulty seeing the serial communication coming through a terminal emulator, contact a T/A or Instructor.
 
 1. Verify that the **S1** (GPIO pin is called Button_1) switch suspends **D1_task** blinking process. Note that it stops at the same state (on or off).
 2. Add an interrupt for **S2**. This will be a second ISR, that does the same thing for **D4_task**. To add this interrupt, you’ll first need to edit the “.IOC” setup file. In the GUI, go to the System Configuration/GPIO/ and tag the pin to be an interrupt:
