@@ -69,8 +69,8 @@ Saving and closing this view will re-generate your **main.c**. You can then modi
 
 4. For the interrupts on Button_1/2, why were the GPIO modes set to be Falling edge trigger?
 
-## Extra Credit (5 pts maximum)
 
+## Ideas for Credit to get to 'A' & Extra-Credit (2 pts for any)
 
 
 1. Use the 3rd button (S3) to alter the time of a task’s execution.  For example, each S3 press increases/decreases the delay by 300mS.
